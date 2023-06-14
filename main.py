@@ -14,11 +14,13 @@ def register():
     password = input("Enter a password: ")
 
     # Open the file and load the data
+    # "r+" is read and write
     with open(user_file, "r+") as file:
         try:
             data = json.load(file)
         except json.JSONDecodeError:
             #DATA
+            #use dictionary since it is faster and more efficient than a list (GeeksforGeeks)
             data = {}
 
         # Check if username already exists
@@ -38,7 +40,7 @@ def login():
     username = input("Enter your username: ")
     password = input("Enter your password: ")
 
-    #OPEN TE FILE
+    #OPEN THE FILE AND READ
     with open(user_file, "r") as file:
         data = json.load(file)
         
@@ -60,26 +62,26 @@ class Game:
     #CHOICE
     def choose(self):
         #what you choose
-        choice = input("{} enter your choice (rock, paper, or scissors): ".format(self.user)).lower()
+        choice = input("\n{} enter your choice (rock, paper, or scissors): ".format(self.user)).lower()
 
         #if not one of the options
         while choice not in choices:
-            print("Invalid choice. Please try again.")
+            print("\nInvalid choice. Please try again.")
 
             #Ask again
-            choice = input("{} enter your choice (rock, paper, or scissors): ".format(self.user)).lower()
+            choice = input("\n{} enter your choice (rock, paper, or scissors): ".format(self.user)).lower()
         return choice
 
     def play(self):
         #welcome the user
-        print("Welcome {}!".format(self.user))
+        print("\nWelcome {}!".format(self.user))
 
         #choices
         choice1 = self.choose()
         choice2 = random.choice(choices)
 
         #who chose what
-        print("{} chooses {}.".format(self.user, choice1))
+        print("\n{} chooses {}.".format(self.user, choice1))
         print("{} chooses {}.".format("Computer", choice2))
         
         #who beat who?
@@ -99,11 +101,11 @@ class Game:
         else:
             return "Computer wins!"
 
-# Main program flow
+# Main program 
 def main():
 
     #WELCOME
-    print("Welcome to Rock, Paper, Scissors!")
+    print("\nWelcome to Rock, Paper, Scissors!")
     logged_in = False
     user = None
 
@@ -145,6 +147,7 @@ def main():
 
             #play the game
             if choice == "1":
+                #at position 0 list all keys in the users dictionary
                 game = Game(list(user.keys())[0])
                 game.play()
             
