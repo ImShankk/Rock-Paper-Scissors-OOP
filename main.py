@@ -1,66 +1,162 @@
 import random
+import json
 
 # Choices list
 choices = ["rock", "paper", "scissors"]
 
-# ALL THE USER ITEMS
-class Player:
-    def __init__(self, name):
-        self.name = name
-        self.choice = None
+# User data stored in a JSON file
+user_file = "UserInf.json"
 
-    # PLAYER CHOICES
-    def choose(self):
-        self.choice = input("{} enter your choice (rock, paper, or scissors): ".format(self.name)).lower()
-        while self.choice not in choices:
-            print("Invalid choice. Please try again.")
-            self.choice = input("{} enter your choice (rock, paper, or scissors): ".format(self.name)).lower()
+# User login and registration
+def register():
+    # User and password input
+    username = input("Enter a username: ")
+    password = input("Enter a password: ")
 
-    def get_choice(self):
-        return self.choice
+    # Open the file and load the data
+    with open(user_file, "r+") as file:
+        try:
+            data = json.load(file)
+        except json.JSONDecodeError:
+            #DATA
+            data = {}
 
-# THE COMPUTER PLAYER
-class ComputerPlayer(Player):
-    def choose(self):
-        self.choice = random.choice(choices)
+        # Check if username already exists
+        if username in data:
+            print("Username already exists. Please choose a different username.")
+            return
 
-# THE GAME ITSELF
+        #write the password and username
+        data[username] = {"password": password}
+        file.seek(0)
+        json.dump(data, file)
+
+    print("Registration successful.")
+
+def login():
+    #INPUTS
+    username = input("Enter your username: ")
+    password = input("Enter your password: ")
+
+    #OPEN TE FILE
+    with open(user_file, "r") as file:
+        data = json.load(file)
+        
+        #PASSWORD RIGHT
+        if username in data and data[username]["password"] == password:
+            print("Login successful.")
+            return {username: data[username]}
+
+    #IF NOT
+    print("Invalid username or password.")
+    return None
+
+# Game logic
+#CLASSES
 class Game:
-    # 2 players and the choices
-    def __init__(self):
-        self.player1 = None
-        self.player2 = ComputerPlayer("Computer")
-        # What wins against what?
-        self.whatBeatswhat = [("rock", "scissors"), ("paper", "rock"), ("scissors", "paper")]
+    def __init__(self, user):
+        self.user = user
 
-    # If statement for the win
-    def whoWins(self, choice1, choice2):
-        # CHOICES YOU CAN DO
+    #CHOICE
+    def choose(self):
+        #what you choose
+        choice = input("{} enter your choice (rock, paper, or scissors): ".format(self.user)).lower()
+
+        #if not one of the options
+        while choice not in choices:
+            print("Invalid choice. Please try again.")
+
+            #Ask again
+            choice = input("{} enter your choice (rock, paper, or scissors): ".format(self.user)).lower()
+        return choice
+
+    def play(self):
+        #welcome the user
+        print("Welcome {}!".format(self.user))
+
+        #choices
+        choice1 = self.choose()
+        choice2 = random.choice(choices)
+
+        #who chose what
+        print("{} chooses {}.".format(self.user, choice1))
+        print("{} chooses {}.".format("Computer", choice2))
+        
+        #who beat who?
+        result = self.check_winner(choice1, choice2)
+        print(result)
+
+    #WHAT BEATS WHAT???
+    def check_winner(self, choice1, choice2):
+
+        #TIE
         if choice1 == choice2:
             return "It's a tie!"
-        elif (choice1, choice2) in self.whatBeatswhat:
-            return "{} wins!".format(self.player1.name)
+        #WIN FOR USER
+        elif (choice1 == "rock" and choice2 == "scissors") or (choice1 == "paper" and choice2 == "rock") or (choice1 == "scissors" and choice2 == "paper"):
+            return "{} wins!".format(self.user)
+        #WIN FOR COMPUTER
         else:
-            return "{} wins!".format(self.player2.name)
+            return "Computer wins!"
 
-    # Player name input
-    def setup(self):
-        player_name = input("Enter your name: ")
-        self.player1 = Player(player_name)
+# Main program flow
+def main():
 
-    # Gameplay itself
-    def play(self):
-        self.setup()
-        # CHOICES
-        self.player1.choose()
-        self.player2.choose()
-        choice1 = self.player1.get_choice()
-        choice2 = self.player2.get_choice()
-        # print choices
-        print("{} chooses {}.".format(self.player1.name, choice1))
-        print("{} chooses {}.".format(self.player2.name, choice2))
-        print(self.whoWins(choice1, choice2))
+    #WELCOME
+    print("Welcome to Rock, Paper, Scissors!")
+    logged_in = False
+    user = None
 
-# start it
-game = Game()
-game.play()
+    #loop
+    while True:
+        if not logged_in:
+
+            #menu
+            print("\nMenu:")
+            print("1. Register")
+            print("2. Login")
+            print("3. Quit")
+
+            #input
+            choice = input("Enter your choice: ")
+
+            #choices for the options
+            if choice == "1":
+                register()
+            elif choice == "2":
+                user = login()
+                if user:
+                    logged_in = True
+            elif choice == "3":
+                print("Goodbye!")
+                break
+
+            #if not
+            else:
+                print("Invalid choice. Please try again.")
+        #retype it
+        else:
+            print("\nMenu:")
+            print("1. Play")
+            print("2. Logout")
+            
+            #input
+            choice = input("Enter your choice: ")
+
+            #play the game
+            if choice == "1":
+                game = Game(list(user.keys())[0])
+                game.play()
+            
+            #log out
+            elif choice == "2":
+                logged_in = False
+                print("Logged out.")
+            
+            #if option not picked
+            else:
+                print("Invalid choice. Please try again.")
+
+# Start the program
+if __name__ == "__main__":
+    main()
