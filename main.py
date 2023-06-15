@@ -14,115 +14,120 @@ def register():
     password = input("Enter a password: ")
 
     # Open the file and load the data
-    # "r+" is read and write
     with open(user_file, "r+") as file:
         try:
             data = json.load(file)
         except json.JSONDecodeError:
-            #DATA
-            #use dictionary since it is faster and more efficient than a list (GeeksforGeeks)
-            data = {}
+            # Empty list if file is empty
+            data = []
 
         # Check if username already exists
-        if username in data:
+        if any(user['username'] == username for user in data):
             print("Username already exists. Please choose a different username.")
             return
 
-        #write the password and username
-        data[username] = {"password": password}
+        # Append new user data to the list
+        data.append({"username": username, "password": password, "points": 0})
+
+        # Write the updated data to the file
         file.seek(0)
         json.dump(data, file)
 
     print("Registration successful.")
 
 def login():
-    #INPUTS
+    # User inputs
     username = input("Enter your username: ")
     password = input("Enter your password: ")
 
-    #OPEN THE FILE AND READ
+    # Open the file and load the data (read)
     with open(user_file, "r") as file:
         data = json.load(file)
-        
-        #PASSWORD RIGHT
-        if username in data and data[username]["password"] == password:
-            print("Login successful.")
-            return {username: data[username]}
 
-    #IF NOT
+        # Check if username and password match
+        for user in data:
+            if user["username"] == username and user["password"] == password:
+                print("Login successful.")
+                return user
+
     print("Invalid username or password.")
     return None
 
-# Game logic
-#CLASSES
+# Function to update user data in the JSON file
+def update_user_data(username, points):
+    #"r+" means read and write
+    with open(user_file, "r+") as file:
+        data = json.load(file)
+        for user in data:
+            #if statement
+            if user['username'] == username:
+                user['points'] = points
+                file.seek(0)
+                json.dump(data, file)
+                break
+
+# Game Class
 class Game:
     def __init__(self, user):
         self.user = user
 
-    #CHOICE
+    #choice inputs
     def choose(self):
-        #what you choose
-        choice = input("\n{} enter your choice (rock, paper, or scissors): ".format(self.user)).lower()
-
-        #if not one of the options
+        choice = input("{} enter your choice (rock, paper, or scissors): ".format(self.user['username'])).lower()
         while choice not in choices:
-            print("\nInvalid choice. Please try again.")
-
-            #Ask again
-            choice = input("\n{} enter your choice (rock, paper, or scissors): ".format(self.user)).lower()
+            print("Invalid choice. Please try again.")
+            choice = input("{} enter your choice (rock, paper, or scissors): ".format(self.user['username'])).lower()
         return choice
 
+    #welcome user
     def play(self):
-        #welcome the user
-        print("\nWelcome {}!".format(self.user))
+        print("Welcome {}!".format(self.user['username']))
 
-        #choices
+        #user choice
         choice1 = self.choose()
+        #computer choice
         choice2 = random.choice(choices)
 
-        #who chose what
-        print("\n{} chooses {}.".format(self.user, choice1))
+        #print both choices
+        print("{} chooses {}.".format(self.user['username'], choice1))
         print("{} chooses {}.".format("Computer", choice2))
-        
-        #who beat who?
+
+        #win check
         result = self.check_winner(choice1, choice2)
         print(result)
 
-    #WHAT BEATS WHAT???
-    def check_winner(self, choice1, choice2):
+        if self.user['username'] in result:
+            #add points
+            self.user['points'] += 1
 
-        #TIE
+        # Update the user data in the JSON file
+        update_user_data(self.user['username'], self.user['points'])
+
+    #check what wins against what
+    def check_winner(self, choice1, choice2):
         if choice1 == choice2:
             return "It's a tie!"
-        #WIN FOR USER
         elif (choice1 == "rock" and choice2 == "scissors") or (choice1 == "paper" and choice2 == "rock") or (choice1 == "scissors" and choice2 == "paper"):
-            return "{} wins!".format(self.user)
-        #WIN FOR COMPUTER
+            return "{} wins!".format(self.user['username'])
         else:
             return "Computer wins!"
 
-# Main program 
+# Main program
 def main():
-
-    #WELCOME
-    print("\nWelcome to Rock, Paper, Scissors!")
+    print("Welcome to Rock, Paper, Scissors!")
     logged_in = False
     user = None
 
-    #loop
+    #menu
     while True:
         if not logged_in:
-
-            #menu
             print("\nMenu:")
             print("1. Register")
             print("2. Login")
             print("3. Quit")
 
-            #input
             choice = input("Enter your choice: ")
 
-            #choices for the options
             if choice == "1":
                 register()
             elif choice == "2":
@@ -132,31 +137,24 @@ def main():
             elif choice == "3":
                 print("Goodbye!")
                 break
-
-            #if not
             else:
                 print("Invalid choice. Please try again.")
-        #retype it
         else:
             print("\nMenu:")
             print("1. Play")
-            print("2. Logout")
-            
-            #input
+            print("2. User Points")
+            print("3. Logout")
+
             choice = input("Enter your choice: ")
 
-            #play the game
             if choice == "1":
-                #at position 0 list all keys in the users dictionary
-                game = Game(list(user.keys())[0])
+                game = Game(user)
                 game.play()
-            
-            #log out
             elif choice == "2":
+                print("Your Points: {}".format(user['points']))
+            elif choice == "3":
                 logged_in = False
                 print("Logged out.")
-            
-            #if option not picked
             else:
                 print("Invalid choice. Please try again.")
 
